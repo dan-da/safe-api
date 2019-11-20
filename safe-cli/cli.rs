@@ -53,7 +53,7 @@ struct CmdArgs {
     /// Endpoint of the Authenticator daemon where to send requests to. If not provided, https://localhost:33000 is assumed.
     #[structopt(long = "endpoint", raw(global = "true"))]
     endpoint: Option<String>,
-    /// dump shell completions.  one of [bash,zsh]
+    /// dump shell completions for: [bash, fish, zsh, powershell, elvish]
     #[structopt(long = "dump-completions", raw(global = "true"))]
     dump_completions: Option<clap::Shell>,
 }
@@ -62,24 +62,25 @@ pub fn run() -> Result<(), String> {
     // Let's first get all the arguments passed in
     let args = CmdArgs::from_args();
 
-    // If requested, generate shell completions and then exit with status of "success"
+    // If requested, generate shell completions and return
     if let Some(shell) = args.dump_completions {
 
         // Note: here we use name of currently running executable.
-        // Possibly could use value of [[bin]].name in Cargo.toml but
-        // I'm unsure how to access it.
-        let binname = std::env::current_exe()
-        .expect("Can't get the exec path")
-        .file_name()
-        .expect("Can't get the exec name")
-        .to_string_lossy()
-        .into_owned();
+        // Possibly could use value of [[bin]].name in Cargo.toml instead
+        let exec_name = std::env::current_exe()
+            .expect("Can't get the exec path")
+            .file_name()
+            .expect("Can't get the exec name")
+            .to_string_lossy()
+            .into_owned();
 
+        // Generates shell completions for <shell> and prints to stdout
         CmdArgs::clap().gen_completions_to(
-            binname,
+            exec_name,
             shell,
             &mut std::io::stdout());
-        std::process::exit(0);
+
+        return Ok(());
     };
 
     let mut safe = Safe::new(args.xorurl_base);
