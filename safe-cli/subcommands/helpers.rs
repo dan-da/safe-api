@@ -27,21 +27,25 @@ pub fn get_from_arg_or_stdin(
     target_arg: Option<String>,
     message: Option<&str>,
 ) -> Result<String, String> {
-    let the_message = message.unwrap_or_else(|| "...awaiting data from STDIN stream...");
     match target_arg {
+        Some(ref t) if t == "" => get_from_stdin(message),
         Some(t) => Ok(t),
-        None => {
-            println!("{}", &the_message);
-            let mut input = String::new();
-            match io::stdin().read_line(&mut input) {
-                Ok(n) => {
-                    debug!("Read ({} bytes) from STDIN: {}", n, input);
-                    input.truncate(input.len() - 1);
-                    Ok(input)
-                }
-                Err(_) => Err("Failed to read from STDIN stream".to_string()),
-            }
+        None => get_from_stdin(message),
+    }
+}
+
+// Outputs a message and then reads a single line from stdin
+pub fn get_from_stdin(message: Option<&str>) -> Result<String, String> {
+    let the_message = message.unwrap_or_else(|| "...awaiting data from STDIN stream...");
+    println!("{}", &the_message);
+    let mut input = String::new();
+    match io::stdin().read_line(&mut input) {
+        Ok(n) => {
+            debug!("Read ({} bytes) from STDIN: {}", n, input);
+            input.truncate(input.len() - 1);
+            Ok(input)
         }
+        Err(_) => Err("Failed to read from STDIN stream".to_string()),
     }
 }
 
@@ -87,6 +91,15 @@ pub fn get_secret_key(key_xorurl: &str, sk: Option<String>, msg: &str) -> Result
 pub fn parse_tx_id(src: &str) -> Result<u64, String> {
     src.parse::<u64>()
         .map_err(|err| format!("{}. A valid TX Id is a number between 0 and 2^64", err))
+}
+
+// converts "-" to "", both of which mean to read from stdin.
+pub fn parse_stdin_arg(src: &str) -> String {
+    if src == "-" || src == "" {
+        "".to_string()
+    } else {
+        src.to_string()
+    }
 }
 
 // serialize structured value using any format from OutputFmt
