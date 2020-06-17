@@ -21,7 +21,7 @@ use safe_api::{
 use safe_cmd_test_utilities::{
     create_preload_and_get_keys, get_random_nrs_string, parse_cat_wallet_output,
     parse_files_container_output, parse_files_put_or_sync_output, safe_cmd_stderr, safe_cmd_stdout,
-    upload_test_symlinks_folder, CLI,
+    test_symlinks_are_valid, upload_test_symlinks_folder, CLI,
 };
 use std::process::Command;
 use unwrap::unwrap;
@@ -343,6 +343,11 @@ fn calling_safe_cat_safekey() {
 //                     ../test_symlinks/sub2/hello.md
 #[test]
 fn calling_cat_symlinks_resolve_dir_and_file() -> Result<(), String> {
+    // Bail if test_symlinks not valid. Typically indicates missing perms on windows.
+    if !test_symlinks_are_valid()? {
+        return Ok(());
+    }
+
     let (url, ..) = upload_test_symlinks_folder(true)?;
     let mut safeurl = XorUrlEncoder::from_url(&url)?;
     safeurl.set_path("/dir_link_link/parent_dir/dir_link/sibling_dir_file.md");
@@ -363,6 +368,11 @@ fn calling_cat_symlinks_resolve_dir_and_file() -> Result<(), String> {
 //    expected result: error, too many links.
 #[test]
 fn calling_cat_symlinks_resolve_infinite_loop() -> Result<(), String> {
+    // Bail if test_symlinks not valid. Typically indicates missing perms on windows.
+    if !test_symlinks_are_valid()? {
+        return Ok(());
+    }
+
     let (url, ..) = upload_test_symlinks_folder(true)?;
     let mut safeurl = XorUrlEncoder::from_url(&url)?;
 
@@ -400,6 +410,11 @@ fn calling_cat_symlinks_resolve_infinite_loop() -> Result<(), String> {
 //                     /sub/readme.md
 #[test]
 fn calling_cat_symlinks_resolve_parent_dir() -> Result<(), String> {
+    // Bail if test_symlinks not valid. Typically indicates missing perms on windows.
+    if !test_symlinks_are_valid()? {
+        return Ok(());
+    }
+
     let (url, ..) = upload_test_symlinks_folder(true)?;
     let mut safeurl = XorUrlEncoder::from_url(&url)?;
 
@@ -418,6 +433,11 @@ fn calling_cat_symlinks_resolve_parent_dir() -> Result<(), String> {
 //    expected result: error, too many links.
 #[test]
 fn calling_cat_symlinks_resolve_dir_outside() -> Result<(), String> {
+    // Bail if test_symlinks not valid. Typically indicates missing perms on windows.
+    if !test_symlinks_are_valid()? {
+        return Ok(());
+    }
+
     let (url, ..) = upload_test_symlinks_folder(true)?;
     let mut safeurl = XorUrlEncoder::from_url(&url)?;
 

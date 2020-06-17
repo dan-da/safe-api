@@ -30,6 +30,7 @@ pub const SAFE_PROTOCOL: &str = "safe://";
 pub const TEST_FOLDER: &str = "../testdata/";
 pub const TEST_FOLDER_NO_TRAILING_SLASH: &str = "../testdata";
 pub const TEST_SYMLINKS_FOLDER: &str = "../test_symlinks";
+pub const TEST_SYMLINK: &str = "../test_symlinks/file_link";
 
 #[allow(dead_code)]
 pub fn get_bin_location() -> String {
@@ -374,4 +375,44 @@ pub fn safe_cmd_stdout(args: &[&str], expect_exit_code: Option<i32>) -> Result<S
 pub fn safe_cmd_stderr(args: &[&str], expect_exit_code: Option<i32>) -> Result<String, String> {
     let output = safe_cmd(&args, expect_exit_code)?;
     String::from_utf8(output.stderr).map_err(|_| "Invalid UTF-8".to_string())
+}
+
+// returns true if the OS permits writing symlinks
+// For windows, this can fail if user does not have
+// adequate perms.  The easiest way to find out is just
+// to try writing one.
+#[cfg(windows)]
+pub fn can_write_symlinks() -> bool {
+    let name_target = get_random_nrs_string();
+    let name_link = get_random_nrs_string();
+    let path_link = env::temp_dir().join(name_link);
+
+    let result = std::os::windows::fs::symlink_file(name_target, path_link);
+
+    if result.is_ok() {
+        // it worked, let's cleanup.
+        std::fs::remove_file(&path_link);
+    }
+
+    result.is_ok()
+}
+
+// returns true if the OS permits writing symlinks
+// For unix, this should always be true.
+#[cfg(unix)]
+pub fn can_write_symlinks() -> bool {
+    true
+}
+
+// determines if path test_symlinks/file_link is a real symlink.
+// This is a proxy to determine if symlinks within symlinks_test
+// dir were created properly (eg by git checkout) since this
+// will fail on windows without adequate permissions.
+pub fn test_symlinks_are_valid() -> Result<bool, String> {
+    let result = std::fs::symlink_metadata(TEST_SYMLINK);
+
+    match result {
+        Ok(meta) => Ok(meta.file_type().is_symlink()),
+        Err(e) => Err(format!("{:?}", e)),
+    }
 }

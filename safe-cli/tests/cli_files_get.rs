@@ -22,9 +22,9 @@ const PROGRESS_NONE: &str = "none";
 
 use safe_api::{xorurl::XorUrlEncoder, Safe};
 use safe_cmd_test_utilities::{
-    create_and_upload_test_absolute_symlinks_folder, create_nrs_link, digest_file,
-    get_random_nrs_string, parse_files_put_or_sync_output, str_to_sha3_256, sum_tree,
-    upload_test_symlinks_folder, upload_testfolder_no_trailing_slash,
+    can_write_symlinks, create_and_upload_test_absolute_symlinks_folder, create_nrs_link,
+    digest_file, get_random_nrs_string, parse_files_put_or_sync_output, str_to_sha3_256, sum_tree,
+    test_symlinks_are_valid, upload_test_symlinks_folder, upload_testfolder_no_trailing_slash,
     upload_testfolder_trailing_slash, TEST_FOLDER,
 };
 
@@ -1053,6 +1053,12 @@ fn files_get_src_is_file_and_dest_newname_not_existing() -> Result<(), String> {
 //    expected result: ../test_symlinks matches /tmp/newname
 #[test]
 fn files_get_symlinks_relative() -> Result<(), String> {
+    // Bail if test_symlinks not valid, or cannot write a test symlink.
+    // Typically indicates missing perms on windows.
+    if !test_symlinks_are_valid()? || !can_write_symlinks() {
+        return Ok(());
+    }
+
     let (files_container_xor, _processed_files, path) = upload_test_symlinks_folder(true)?;
 
     let src = source_path(&files_container_xor, &[])?;
@@ -1080,6 +1086,12 @@ fn files_get_symlinks_relative() -> Result<(), String> {
 //    expected result: source directory matches /tmp/newname
 #[test]
 fn files_get_symlinks_absolute() -> Result<(), String> {
+    // Bail if cannot write a test symlink.
+    // Typically indicates missing perms on windows.
+    if !can_write_symlinks() {
+        return Ok(());
+    }
+
     let (files_container_xor, _processed_files, tmp_dir, symlinks_dir) =
         create_and_upload_test_absolute_symlinks_folder(true)?;
 
