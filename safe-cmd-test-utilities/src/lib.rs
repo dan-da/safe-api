@@ -387,11 +387,11 @@ pub fn can_write_symlinks() -> bool {
     let name_link = get_random_nrs_string();
     let path_link = env::temp_dir().join(name_link);
 
-    let result = std::os::windows::fs::symlink_file(name_target, path_link);
+    let result = std::os::windows::fs::symlink_file(name_target, &path_link);
 
     if result.is_ok() {
         // it worked, let's cleanup.
-        std::fs::remove_file(&path_link);
+        let _r = std::fs::remove_file(&path_link);
     }
 
     result.is_ok()
